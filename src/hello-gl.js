@@ -468,11 +468,14 @@ function hello_world(control_div, canvas, mesh_size, lighting, use_texture) {
   });
   gui.add(params, 'distance', 2, 30);
   gui.add(params, 'phi', -90, 90);
+  
+  gui.close();  // Start closed
 
   control_div.appendChild(gui.domElement);
 
 //  alert('uints? + ' + uints_for_indices);
-  loadTexture(gl, '3_no_ice_clouds_1k.jpg', 
+//  loadTexture(gl, '3_no_ice_clouds_1k.jpg', 
+  loadTexture(gl, 'land_ocean_ice_cloud_2048.jpg', 
               texture => hello_world_allready(gl, params, texture));
 }
 
