@@ -72,14 +72,6 @@ const fsSource = `
 
 
 // Fragment shader
-const fsSourceColored = `
-    varying highp vec3 vLighting;
-    varying highp vec4 vColor;
-
-    void main() {
-      gl_FragColor = vec4(vColor.rgb * vLighting, color.a);
-    }
-  `;
 
 /////////////////////////////////////////////////////////////////////////////
 // Utility Functions
@@ -177,8 +169,8 @@ function isPowerOf2(value) {
 // TODO:  This needs to take a modelViewMatrix instead of deltaTime, but otherwise
 //        it's about right.
 function drawScene(gl, programInfo, vertexBuffer, colorBuffer, normalBuffer,
-                   textureBuffer, indexBuffer, vertexCount, deltaTime, 
-                   lighting, use_texture, distance, phi) {
+                   textureBuffer, indexBuffer, vertexCount, 
+                   lighting, use_texture, modelViewMatrix) {
     const fieldOfView = 25 * Math.PI / 180;
     const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
     const zNear = 0.1;
@@ -191,23 +183,6 @@ function drawScene(gl, programInfo, vertexBuffer, colorBuffer, normalBuffer,
                      zNear,
                      zFar);
 
-
-    const modelViewMatrix = mat4.create();
-    mat4.translate(modelViewMatrix,     // destination matrix
-                   modelViewMatrix,     // matrix to translate
-                   [0.0, 0.0, -distance]);  // Amount to translate
-
-
-    mat4.rotate(modelViewMatrix,
-                modelViewMatrix,
-                -Math.PI/2.0 + phi*Math.PI/180.0,
-                [1, 0, 0]);
-
-
-    mat4.rotate(modelViewMatrix,
-                modelViewMatrix,
-                deltaTime*0.2,
-                [0, 0, 1]);
 
     const normalMatrix = mat4.create();
     mat4.invert(normalMatrix, modelViewMatrix);
@@ -313,7 +288,6 @@ function drawScene(gl, programInfo, vertexBuffer, colorBuffer, normalBuffer,
     {
       const offset = 0;
       const type = gl.UNSIGNED_INT;
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);        
 //      gl.drawElements(gl.LINES, vertexCount, type, offset);        
     }
@@ -442,26 +416,61 @@ function delete_obj(gl, obj) {
 
 function hello_world(control_div, canvas, mesh_size, lighting, use_texture) {
   let gl = canvas.getContext("webgl");
-  var uints_for_indices = gl.getExtension("OES_element_index_uint");
+  let uints_for_indices = gl.getExtension("OES_element_index_uint");
+
+  if (!gl) {
+    console.log("can't find any webgl");
+    alert("Your browser does not support WebGL");
+    return;
+  }
 
   gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque
   gl.clearDepth(1.0);                 // Clear everything
   gl.enable(gl.DEPTH_TEST);           // Enable depth testing
   gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
-  
-  
+
+  const shaderProgram = initShaderProgram(gl, vsSource, fsSource);
+  const programInfo = {
+    program: shaderProgram,
+    attribLocations: {
+      vertexPosition: gl.getAttribLocation(shaderProgram,
+                                           'aVertexPosition'),
+      vertexNormal: gl.getAttribLocation(shaderProgram, 'aVertexNormal'),
+      textureCoord: gl.getAttribLocation(shaderProgram, 'aTextureCoord'),
+      vertexColor: gl.getAttribLocation(shaderProgram, 'aVertexColor')
+    },
+    uniformLocations: {
+      projectionMatrix: gl.getUniformLocation(shaderProgram,
+                                              'uProjectionMatrix'),
+      modelViewMatrix: gl.getUniformLocation(shaderProgram,
+                                             'uModelViewMatrix'),
+      normalMatrix: gl.getUniformLocation(shaderProgram,
+                                          'uNormalMatrix'),
+      directionalLighting: gl.getUniformLocation(shaderProgram,
+                                                 'uDirectionalLighting'),
+      useTexture: gl.getUniformLocation(shaderProgram,
+                                        'uUseTexture')      
+    }
+  };
+
   let params = {texture: use_texture,
+                multiple_earth: false,
                 lighting: lighting,
                 mesh_size: mesh_size,
                 distance: 6,
                 phi: 0,
-                obj: make_sphere(gl, mesh_size)
+                obj: make_sphere(gl, mesh_size),
+                programInfo: programInfo
                };
 
+  //
+  // Build the controls
+  //
   let gui = new dat.GUI();
+  gui.add(params, 'multiple_earth');
   gui.add(params, 'texture');
   gui.add(params, 'lighting', ['uniform', 'directional']);
-  gui.add(params, 'mesh_size', 5, 200).onFinishChange(val => {
+  gui.add(params, 'mesh_size', 5, 75).onChange(val => {
     params.mesh_size = Math.round(val);
     delete_obj(gl, params.obj);
     params.obj = make_sphere(gl, params.mesh_size);
@@ -473,62 +482,65 @@ function hello_world(control_div, canvas, mesh_size, lighting, use_texture) {
 
   control_div.appendChild(gui.domElement);
 
-//  alert('uints? + ' + uints_for_indices);
-//  loadTexture(gl, '3_no_ice_clouds_1k.jpg', 
+  // load the earth texture, and then kick off 
   loadTexture(gl, 'land_ocean_ice_cloud_2048.jpg', 
-              texture => hello_world_allready(gl, params, texture));
+              texture => hello_world_animation_loop(gl, params, texture));
 }
 
-function hello_world_allready(gl, params, texture) {
-    if (!gl) {
-        console.log("can't find any webgl");
-        alert("Your browser does not support WebGL");
-        return;
+function hello_world_animation_loop(gl, params, texture) {
+  let time_start = window.performance.now();
+  function render(time_now) {
+    const delta_time = time_now - time_start;
+    let obj = params.obj;
+        
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    
+    drawObject(gl, params, 0, 0, -params.distance, 
+               params.phi, delta_time*0.001*0.5);
+    if (params.multiple_earth) {
+      drawObject(gl, params, -1.5, 1.5, -params.distance, 
+                 params.phi, delta_time*0.001*0.5);
+
+      drawObject(gl, params, 1.5, 1.5, -params.distance, 
+                 params.phi, delta_time*0.001*0.5);
+
+      drawObject(gl, params, -1.5, -1.5, -params.distance, 
+                 params.phi, delta_time*0.001*0.5);
+
+      drawObject(gl, params, 1.5, -1.5, -params.distance, 
+                 params.phi, delta_time*0.001*0.5);
+
     }
-
-    const shaderProgram = initShaderProgram(gl, vsSource, fsSource);
-    const programInfo = {
-        program: shaderProgram,
-        attribLocations: {
-            vertexPosition: gl.getAttribLocation(shaderProgram,
-                                                 'aVertexPosition'),
-            vertexNormal: gl.getAttribLocation(shaderProgram, 'aVertexNormal'),
-            textureCoord: gl.getAttribLocation(shaderProgram, 'aTextureCoord'),
-            vertexColor: gl.getAttribLocation(shaderProgram, 'aVertexColor')
-        },
-        uniformLocations: {
-            projectionMatrix: gl.getUniformLocation(shaderProgram,
-                                                    'uProjectionMatrix'),
-            modelViewMatrix: gl.getUniformLocation(shaderProgram,
-                                                   'uModelViewMatrix'),
-            normalMatrix: gl.getUniformLocation(shaderProgram,
-                                                'uNormalMatrix'),
-            directionalLighting: gl.getUniformLocation(shaderProgram,
-                                              'uDirectionalLighting'),
-            useTexture: gl.getUniformLocation(shaderProgram,
-                                              'uUseTexture')
-
-        }
-    };
-
-    // Tell WebGL we want to affect texture unit 0
-    gl.activeTexture(gl.TEXTURE0);
     
-    // Bind the texture to texture unit 0
-    gl.bindTexture(gl.TEXTURE_2D, texture);
     
-    let time_start = window.performance.now();
-    function render(time_now) {
-        const delta_time = time_now - time_start;
-        let obj = params.obj;
-        drawScene(gl, programInfo, obj.vertexBuffer, obj.colorBuffer,
-                  obj.normalBuffer, obj.textureBuffer, 
-                  obj.indexBuffer, obj.vertexCount, delta_time*0.001,
-                  params.lighting, params.texture, params.distance,
-                  params.phi);
-        window.requestAnimationFrame(render);
-    };
     window.requestAnimationFrame(render);
+    
+  };
+  window.requestAnimationFrame(render);
+}
+
+function drawObject(gl, params, offset_x, offset_y, offset_z, phi, theta) {
+  const modelViewMatrix = mat4.create();
+
+  mat4.translate(modelViewMatrix,     // destination matrix
+                 modelViewMatrix,     // matrix to translate
+                 [offset_x, offset_y, offset_z]);  // Amount to translate
+  
+  mat4.rotate(modelViewMatrix,
+              modelViewMatrix,
+              -Math.PI/2.0 + phi*Math.PI/180.0,
+              [1, 0, 0]);
+  
+  mat4.rotate(modelViewMatrix,
+              modelViewMatrix,
+              theta,
+              [0, 0, 1]);
+
+  let obj = params.obj;
+  drawScene(gl, params.programInfo, obj.vertexBuffer, obj.colorBuffer,
+            obj.normalBuffer, obj.textureBuffer, 
+            obj.indexBuffer, obj.vertexCount,
+            params.lighting, params.texture, modelViewMatrix);
 }
 
 export default hello_world;
