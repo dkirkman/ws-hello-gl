@@ -4,17 +4,23 @@ import {mat4} from 'gl-matrix';
 import dat from 'dat.gui';
 
 
-function hello_world(controlDiv, canvas, meshSize, lighting, useTexture) {
+function hello_world(controlDiv, canvas, meshSize, lighting,
+                     useTexture) {
   let gl = initWebGL(canvas);
   if (!gl) return;
 
   const programInfo 
-          = initProgramInfo(gl, vertexShaderSource, fragmentShaderSource);
-  let params = initParams(gl, programInfo, meshSize, lighting, useTexture);
+          = initProgramInfo(gl, vertexShaderSource, 
+                            fragmentShaderSource);
+  let params = initParams(gl, programInfo, meshSize, 
+                          lighting, useTexture);
   initGUI(gl, controlDiv, params);
 
-  loadTexture(gl, 'land_ocean_ice_cloud_2048.jpg', 
-              texture => helloWorldAnimationLoop(gl, params, texture));
+  loadTexture(
+    gl, 
+    'land_ocean_ice_cloud_2048.jpg', 
+    texture => helloWorldAnimationLoop(gl, params, texture)
+  );
 }
 
 function helloWorldAnimationLoop(gl, params, texture) {
@@ -61,7 +67,8 @@ function initWebGL(canvas) {
   let gl = canvas.getContext("webgl");
 
   if (!gl) {
-    console.log("can't find any webgl -- this is not going to work");
+    console.log("can't find any webgl -- " + 
+                "this is not going to work");
     alert("Your browser does not support WebGL");
   }
 
@@ -70,15 +77,19 @@ function initWebGL(canvas) {
 
 
 function initProgramInfo(gl, vertexSource, fragmentSource) {
-  const shaderProgram = initShaderProgram(gl, vertexSource, fragmentSource);
+  const shaderProgram = initShaderProgram(gl, vertexSource, 
+                                          fragmentSource);
   const programInfo = {
     program: shaderProgram,
     attribLocations: {
-      vertexPosition: gl.getAttribLocation(shaderProgram,
+      vertexPosition: gl.getAttribLocation(shaderProgram, 
                                            'aVertexPosition'),
-      vertexNormal: gl.getAttribLocation(shaderProgram, 'aVertexNormal'),
-      textureCoord: gl.getAttribLocation(shaderProgram, 'aTextureCoord'),
-      vertexColor: gl.getAttribLocation(shaderProgram, 'aVertexColor')
+      vertexNormal: gl.getAttribLocation(shaderProgram, 
+                                         'aVertexNormal'),
+      textureCoord: gl.getAttribLocation(shaderProgram, 
+                                         'aTextureCoord'),
+      vertexColor: gl.getAttribLocation(shaderProgram, 
+                                        'aVertexColor')
     },
     uniformLocations: {
       projectionMatrix: gl.getUniformLocation(shaderProgram,
@@ -97,7 +108,8 @@ function initProgramInfo(gl, vertexSource, fragmentSource) {
   return programInfo;
 }
 
-function initParams(gl, programInfo, meshSize, lighting, useTexture) {
+function initParams(gl, programInfo, meshSize, lighting, 
+                    useTexture) {
   let params = {useTexture: useTexture,
                 multipleEarth: false,
                 lighting: lighting,
@@ -129,9 +141,9 @@ function initGUI(gl, controlDiv, params) {
   controlDiv.appendChild(gui.domElement);
 }
 
-/////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
 // Shaders
-/////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
 
 const vertexShaderSource = `
     attribute vec3 aVertexNormal;
@@ -156,14 +168,19 @@ const vertexShaderSource = `
       if (uDirectionalLighting > 0.0) {
          highp vec3 ambientLight = vec3(0.1, 0.1, 0.1);
          highp vec3 directionalLightColor = vec3(1, 1, 1);
-         highp vec3 directionalVector = normalize(vec3(1.0, 0.3, 0.5));
+         highp vec3 directionalVector 
+            = normalize(vec3(1.0, 0.3, 0.5));
 
-         highp vec4 transformedNormal = uNormalMatrix * vec4(aVertexNormal, 1.0);
+         highp vec4 transformedNormal 
+            = uNormalMatrix * vec4(aVertexNormal, 1.0);
 
-         highp float directional = max(dot(transformedNormal.xyz, 
-                                           directionalVector), 0.0);
+         highp float directional = max(
+            dot(transformedNormal.xyz, directionalVector), 
+            0.0
+         );
 
-         vLighting = ambientLight + (directionalLightColor * directional);
+         vLighting = ambientLight 
+                   + (directionalLightColor * directional);
       } else {
          vLighting = vec3(1.0, 1.0, 1.0);
       }
@@ -201,7 +218,8 @@ function bindVertexAttrib(gl, size, buffer, aloc) {
   const offset = 0;
 
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.vertexAttribPointer(aloc, size, type, normalize, stride, offset);
+    gl.vertexAttribPointer(aloc, size, type, normalize, 
+                           stride, offset);
     gl.enableVertexAttribArray(aloc);  
 }
 
@@ -227,7 +245,8 @@ function bindUniforms(gl, params, obj, modelViewMatrix) {
   const programInfo = params.programInfo;
 
   const fieldOfView = 25 * Math.PI / 180;
-  const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+  const aspect = gl.canvas.clientWidth 
+               / gl.canvas.clientHeight;
   const zNear = 0.1;
   const zFar = 100.0;
   const projectionMatrix = mat4.create();
@@ -277,7 +296,8 @@ function bindAndRender(gl, params, obj, modelViewMatrix) {
   {
     const offset = 0;
     const type = gl.UNSIGNED_SHORT;
-    gl.drawElements(gl.TRIANGLES, obj.vertexCount, type, offset);        
+    gl.drawElements(gl.TRIANGLES, obj.vertexCount, type, 
+                    offset);        
   }
 }
 
@@ -344,7 +364,7 @@ function make_sphere(gl, meshSize) {
           indices[iindex*6 + 0] = ((j+1)*nn + i)*2;
           indices[iindex*6 + 1] = (j*nn + i)*2;
           indices[iindex*6 + 2] = (j*nn + (i+1))*2;
-
+          
           indices[iindex*6 + 3] = ((j+1)*nn + i)*2 + 1;          
           indices[iindex*6 + 4] = ((j+1)*nn + (i+1))*2 + 1;
           indices[iindex*6 + 5] = (j*nn + (i+1))*2 + 1;        
@@ -355,11 +375,13 @@ function make_sphere(gl, meshSize) {
   
   let vertexBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), 
+                gl.STATIC_DRAW);
   
   let colorBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), 
+                gl.STATIC_DRAW);
   
   let normalBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
@@ -393,12 +415,13 @@ function delete_obj(gl, obj) {
   gl.deleteBuffer(obj.textureBuffer);
 }
 
-function drawObject(gl, params, offset_x, offset_y, offset_z, phi, theta) {
+function drawObject(gl, params, offset_x, offset_y, 
+                    offset_z, phi, theta) {
   const modelViewMatrix = mat4.create();
 
-  mat4.translate(modelViewMatrix,     // destination matrix
-                 modelViewMatrix,     // matrix to translate
-                 [offset_x, offset_y, offset_z]);  // Amount to translate
+  mat4.translate(modelViewMatrix,     
+                 modelViewMatrix,     
+                 [offset_x, offset_y, offset_z]); 
   
   mat4.rotate(modelViewMatrix,
               modelViewMatrix,
@@ -414,10 +437,10 @@ function drawObject(gl, params, offset_x, offset_y, offset_z, phi, theta) {
   bindAndRender(gl, params, obj, modelViewMatrix);
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// Utility functions from https://github.com/mdn/webgl-examples (slightly modified)
-// Original code under CC0 license
-/////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+// Utility functions from https://github.com/mdn/webgl-examples
+// (slightly modified) Original code under CC0 license
+////////////////////////////////////////////////////////////
 
 function loadShader(gl, type, source) {
   const shader = gl.createShader(type);
@@ -425,7 +448,8 @@ function loadShader(gl, type, source) {
   gl.compileShader(shader);
   
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
+    alert('An error occurred compiling the shaders: ' 
+          + gl.getShaderInfoLog(shader));
     gl.deleteShader(shader);
     return null;
   } 
@@ -434,8 +458,10 @@ function loadShader(gl, type, source) {
 }
 
 function initShaderProgram(gl, vsSource, fsSource) {
-  const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
-  const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
+  const vertexShader = loadShader(gl, gl.VERTEX_SHADER, 
+                                  vsSource);
+  const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, 
+                                    fsSource);
   
   const shaderProgram = gl.createProgram();
   gl.attachShader(shaderProgram, vertexShader);
@@ -443,7 +469,8 @@ function initShaderProgram(gl, vsSource, fsSource) {
   gl.linkProgram(shaderProgram);
   
   if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-    alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
+    alert('Unable to initialize the shader program: ' 
+          + gl.getProgramInfoLog(shaderProgram));
     return null;
   } 
   
@@ -490,9 +517,12 @@ function loadTexture(gl, url, continuation) {
     } else {
        // No, it's not a power of 2. Turn of mips and set
        // wrapping to clamp to edge
-       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, 
+                        gl.CLAMP_TO_EDGE);
+       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, 
+                        gl.CLAMP_TO_EDGE);
+       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, 
+                        gl.LINEAR);
     }
 
     continuation(texture);
@@ -504,9 +534,9 @@ function isPowerOf2(value) {
   return (value & (value - 1)) == 0;
 }
 
-/////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
 // End utility functions
-/////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
 
 export default hello_world;
 
