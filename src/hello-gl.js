@@ -78,38 +78,38 @@ const fsSource = `
 /////////////////////////////////////////////////////////////////////////////
 
 function loadShader(gl, type, source) {
-    const shader = gl.createShader(type);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
-        gl.deleteShader(shader);
-        return null;
-    } else {
-        console.log('shader successfully compiled');
-    }
-
-    return shader;
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
+    gl.deleteShader(shader);
+    return null;
+  } else {
+    console.log('shader successfully compiled');
+  }
+  
+  return shader;
 }
 
 function initShaderProgram(gl, vsSource, fsSource) {
-    const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
-    const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
-
-    const shaderProgram = gl.createProgram();
-    gl.attachShader(shaderProgram, vertexShader);
-    gl.attachShader(shaderProgram, fragmentShader);
-    gl.linkProgram(shaderProgram);
-
-    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-        alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
-        return null;
-    } else {
-        console.log('shader program successfully linked');
-    }
-
-    return shaderProgram;
+  const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
+  const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
+  
+  const shaderProgram = gl.createProgram();
+  gl.attachShader(shaderProgram, vertexShader);
+  gl.attachShader(shaderProgram, fragmentShader);
+  gl.linkProgram(shaderProgram);
+  
+  if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+    alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
+    return null;
+  } else {
+    console.log('shader program successfully linked');
+  }
+  
+  return shaderProgram;
 }
 
 //
@@ -119,7 +119,7 @@ function initShaderProgram(gl, vsSource, fsSource) {
 function loadTexture(gl, url, continuation) {
   const texture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, texture);
-
+  
   // Because images have to be download over the internet
   // they might take a moment until they are ready.
   // Until then put a single pixel in the texture so we can
@@ -171,126 +171,125 @@ function isPowerOf2(value) {
 function drawScene(gl, programInfo, vertexBuffer, colorBuffer, normalBuffer,
                    textureBuffer, indexBuffer, vertexCount, 
                    lighting, use_texture, modelViewMatrix) {
-    const fieldOfView = 25 * Math.PI / 180;
-    const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-    const zNear = 0.1;
-    const zFar = 100.0;
-    const projectionMatrix = mat4.create();
-
-    mat4.perspective(projectionMatrix,
-                     fieldOfView,
-                     aspect,
-                     zNear,
-                     zFar);
-
-
-    const normalMatrix = mat4.create();
-    mat4.invert(normalMatrix, modelViewMatrix);
-    mat4.transpose(normalMatrix, normalMatrix);
-
-    {
-        const numComponents = 3;
-        const type = gl.FLOAT;
-        const normalize = false;
-        const stride = 0;
-        const offset = 0;
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-        gl.vertexAttribPointer(
-            programInfo.attribLocations.vertexPosition,
-            numComponents,
-            type,
-            normalize,
-            stride,
-            offset);
-        gl.enableVertexAttribArray(
-            programInfo.attribLocations.vertexPosition);
-    }
-
-    {
-        const numComponents = 3;
-        const type = gl.FLOAT;
-        const normalize = false;
-        const stride = 0;
-        const offset = 0;
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-        gl.vertexAttribPointer(
-            programInfo.attribLocations.vertexNormal,
-            numComponents,
-            type,
-            normalize,
-            stride,
-            offset);
-        gl.enableVertexAttribArray(
-            programInfo.attribLocations.vertexNormal);
-    }
-
+  const fieldOfView = 25 * Math.PI / 180;
+  const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+  const zNear = 0.1;
+  const zFar = 100.0;
+  const projectionMatrix = mat4.create();
+  
+  mat4.perspective(projectionMatrix,
+                   fieldOfView,
+                   aspect,
+                   zNear,
+                   zFar);
+  
+  
+  const normalMatrix = mat4.create();
+  mat4.invert(normalMatrix, modelViewMatrix);
+  mat4.transpose(normalMatrix, normalMatrix);
+  
+  {
+    const numComponents = 3;
+    const type = gl.FLOAT;
+    const normalize = false;
+    const stride = 0;
+    const offset = 0;
     
-    {
-        const numComponents = 4;
-        const type = gl.FLOAT;
-        const normalize = false;
-        const stride = 0;
-        const offset = 0;
-        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-
-        gl.vertexAttribPointer(
-            programInfo.attribLocations.vertexColor,
-            numComponents,
-            type,
-            normalize,
-            stride,
-            offset);
-        gl.enableVertexAttribArray(
-            programInfo.attribLocations.vertexColor);
-    }
-
-    {
-        const num = 2; // every coordinate composed of 2 values
-        const type = gl.FLOAT; // the data in the buffer is 32 bit float
-        const normalize = false; // don't normalize
-        const stride = 0; // how many bytes to get from one set to the next
-        const offset = 0; // how many butes inside the buffer to start from
-        gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
-        gl.vertexAttribPointer(programInfo.attribLocations.textureCoord, 
-                               num, type, normalize, stride, offset);
-        gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
-    }
-
-
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-
-    gl.useProgram(programInfo.program);
-
-    gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix,
-                        false,
-                        projectionMatrix);
-    gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix,
-                        false,
-                        modelViewMatrix);
-    gl.uniformMatrix4fv(programInfo.uniformLocations.normalMatrix,
-                        false,
-                        normalMatrix);
-
-    if (use_texture) {
-      gl.uniform1f(programInfo.uniformLocations.useTexture, 1.0);
-    } else {
-      gl.uniform1f(programInfo.uniformLocations.useTexture, 0.0);
-    }
-
-    if (lighting === "directional") {
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+    gl.vertexAttribPointer(
+      programInfo.attribLocations.vertexPosition,
+      numComponents,
+      type,
+      normalize,
+      stride,
+      offset);
+    gl.enableVertexAttribArray(
+      programInfo.attribLocations.vertexPosition);
+  }
+  
+  {
+    const numComponents = 3;
+    const type = gl.FLOAT;
+    const normalize = false;
+    const stride = 0;
+    const offset = 0;
+    
+    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+    gl.vertexAttribPointer(
+      programInfo.attribLocations.vertexNormal,
+      numComponents,
+      type,
+      normalize,
+      stride,
+      offset);
+    gl.enableVertexAttribArray(
+      programInfo.attribLocations.vertexNormal);
+  }
+  
+  
+  {
+    const numComponents = 4;
+    const type = gl.FLOAT;
+    const normalize = false;
+    const stride = 0;
+    const offset = 0;
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+    
+    gl.vertexAttribPointer(
+      programInfo.attribLocations.vertexColor,
+      numComponents,
+      type,
+      normalize,
+      stride,
+      offset);
+    gl.enableVertexAttribArray(
+      programInfo.attribLocations.vertexColor);
+  }
+  
+  {
+    const num = 2; // every coordinate composed of 2 values
+    const type = gl.FLOAT; // the data in the buffer is 32 bit float
+    const normalize = false; // don't normalize
+    const stride = 0; // how many bytes to get from one set to the next
+    const offset = 0; // how many butes inside the buffer to start from
+    gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
+    gl.vertexAttribPointer(programInfo.attribLocations.textureCoord, 
+                           num, type, normalize, stride, offset);
+    gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
+  }
+  
+  
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+  
+  gl.useProgram(programInfo.program);
+  
+  gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix,
+                      false,
+                      projectionMatrix);
+  gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix,
+                      false,
+                      modelViewMatrix);
+  gl.uniformMatrix4fv(programInfo.uniformLocations.normalMatrix,
+                      false,
+                      normalMatrix);
+  
+  if (use_texture) {
+    gl.uniform1f(programInfo.uniformLocations.useTexture, 1.0);
+  } else {
+    gl.uniform1f(programInfo.uniformLocations.useTexture, 0.0);
+  }
+  
+  if (lighting === "directional") {
       gl.uniform1f(programInfo.uniformLocations.directionalLighting, 1.0);
-    } else {
-      gl.uniform1f(programInfo.uniformLocations.directionalLighting, 0.0);
-    }
-
-    {
-      const offset = 0;
-      const type = gl.UNSIGNED_INT;
-      gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);        
-//      gl.drawElements(gl.LINES, vertexCount, type, offset);        
-    }
+  } else {
+    gl.uniform1f(programInfo.uniformLocations.directionalLighting, 0.0);
+  }
+  
+  {
+    const offset = 0;
+    const type = gl.UNSIGNED_INT;
+    gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);        
+  }
 }
 
 
@@ -301,12 +300,8 @@ function make_sphere(gl, mesh_size) {
   var indices = [];
   var textureCoords = [];
   
-  //    positions = positions.concat(0.0, 0.0, 1.0);
-  //    colors = colors.concat(1.0, 0.0, 1.0, 1.0);
-  //    normals = normals.concat(0.0, 0.0, 1.0);
-  
-  let nlong = mesh_size;   // Number of longitude subdivisions
-  let nlat = mesh_size;    // Number of lattitude subdivisions
+  let nlong = mesh_size; 
+  let nlat = mesh_size;  
   
   var count = 0;
   for (var j=0; j<=nlat; ++j) {
@@ -316,8 +311,6 @@ function make_sphere(gl, mesh_size) {
       
       var index = j*(nlong+1) + i;
 
-      /*      
-       */    
       positions[index*6 + 0] = Math.cos(long)*Math.sin(lat);
       positions[index*6 + 1] = Math.sin(long)*Math.sin(lat);
       positions[index*6 + 2] = Math.cos(lat);
@@ -326,8 +319,8 @@ function make_sphere(gl, mesh_size) {
       positions[index*6 + 4] = Math.sin(long)*Math.sin(lat);
       positions[index*6 + 5] = Math.cos(lat);
 
-      /*      
-       */
+
+
       normals[index*6 + 0] = Math.cos(long)*Math.sin(lat);
       normals[index*6 + 1] = Math.sin(long)*Math.sin(lat);
       normals[index*6 + 2] = Math.cos(lat);
@@ -336,17 +329,14 @@ function make_sphere(gl, mesh_size) {
       normals[index*6 + 4] = Math.sin(long)*Math.sin(lat);
       normals[index*6 + 5] = Math.cos(lat);
       
-      /*
-      */
+
       textureCoords[index*4 + 0] = i/nlong;
       textureCoords[index*4 + 1] = j/nlat;
 
       textureCoords[index*4 + 2] = i/nlong;
       textureCoords[index*4 + 3] = j/nlat;
       
-//      console.log(textureCoords[index*4 + 0] + ' ' + textureCoords[index*4+1]);
-      /*
-       */      
+
       colors[index*8 + 0] = 0.0;
       colors[index*8 + 1] = 1.0;
       colors[index*8 + 2] = 0.0;
