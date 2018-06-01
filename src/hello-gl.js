@@ -34,25 +34,16 @@ function helloWorldAnimationLoop(gl, params, texture) {
 
   function render(time_now) {
     const delta_time = time_now - time_start;
+    const theta = delta_time*0.001*0.5; 
     let obj = params.obj;
         
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+ 
     
     drawObject(gl, params, 0, 0, -params.distance, 
-               params.phi, delta_time*0.001*0.5);
+               params.phi, theta);
     if (params.multipleEarth) {
-      drawObject(gl, params, -1.5, 1.5, -params.distance, 
-                 params.phi, delta_time*0.001*0.5);
-
-      drawObject(gl, params, 1.5, 1.5, -params.distance, 
-                 params.phi, delta_time*0.001*0.5);
-
-      drawObject(gl, params, -1.5, -1.5, -params.distance, 
-                 params.phi, delta_time*0.001*0.5);
-
-      drawObject(gl, params, 1.5, -1.5, -params.distance, 
-                 params.phi, delta_time*0.001*0.5);
-
+      drawAdditionalEarths(gl, params, theta);
     }
         
     window.requestAnimationFrame(render);    
@@ -62,6 +53,19 @@ function helloWorldAnimationLoop(gl, params, texture) {
   window.requestAnimationFrame(render);
 }
 
+function drawAdditionalEarths(gl, params, theta) {
+      drawObject(gl, params, -1.5, 1.5, -params.distance, 
+                 params.phi, theta);
+
+      drawObject(gl, params, 1.5, 1.5, -params.distance, 
+                 params.phi, theta);
+
+      drawObject(gl, params, -1.5, -1.5, -params.distance, 
+                 params.phi, theta);
+
+      drawObject(gl, params, 1.5, -1.5, -params.distance, 
+                 params.phi, theta);
+}
 
 function initWebGL(canvas) {
   let gl = canvas.getContext("webgl");
@@ -116,7 +120,7 @@ function initParams(gl, programInfo, meshSize, lighting,
                 meshSize: meshSize,
                 distance: 6,
                 phi: 0,
-                obj: make_sphere(gl, meshSize),
+                obj: makeSphere(gl, meshSize),
                 programInfo: programInfo
                };
 
@@ -130,8 +134,8 @@ function initGUI(gl, controlDiv, params) {
   gui.add(params, 'lighting', ['uniform', 'directional']);
   gui.add(params, 'meshSize', 5, 75).onChange(val => {
     params.meshSize = Math.round(val);
-    delete_obj(gl, params.obj);
-    params.obj = make_sphere(gl, params.meshSize);
+    deleteObj(gl, params.obj);
+    params.obj = makeSphere(gl, params.meshSize);
   });
   gui.add(params, 'distance', 2, 30);
   gui.add(params, 'phi', -90, 90);
@@ -302,23 +306,22 @@ function bindAndRender(gl, params, obj, modelViewMatrix) {
 }
 
 
-function make_sphere(gl, meshSize) {
-  var positions = [];
-  var colors = [];
-  var normals = [];
-  var indices = [];
-  var textureCoords = [];
+function makeSphere(gl, meshSize) {
+  let positions = [];
+  let colors = [];
+  let normals = [];
+  let indices = [];
+  let textureCoords = [];
   
   let nlong = meshSize; 
   let nlat = meshSize;  
   
-  var count = 0;
   for (var j=0; j<=nlat; ++j) {
     for (var i=0; i<=nlong; ++i) {
-      var long = (2*Math.PI/nlong) * i;
-      var lat = (Math.PI/nlat) * j;
+      let long = (2*Math.PI/nlong) * i;
+      let lat = (Math.PI/nlat) * j;
       
-      var index = j*(nlong+1) + i;
+      let index = j*(nlong+1) + i;
 
       positions[index*6 + 0] = Math.cos(long)*Math.sin(lat);
       positions[index*6 + 1] = Math.sin(long)*Math.sin(lat);
@@ -327,7 +330,6 @@ function make_sphere(gl, meshSize) {
       positions[index*6 + 3] = Math.cos(long)*Math.sin(lat);
       positions[index*6 + 4] = Math.sin(long)*Math.sin(lat);
       positions[index*6 + 5] = Math.cos(lat);
-
 
 
       normals[index*6 + 0] = Math.cos(long)*Math.sin(lat);
@@ -407,7 +409,7 @@ function make_sphere(gl, meshSize) {
           vertexCount: indices.length};
 }
 
-function delete_obj(gl, obj) {
+function deleteObj(gl, obj) {
   gl.deleteBuffer(obj.vertexBuffer);
   gl.deleteBuffer(obj.colorBuffer);
   gl.deleteBuffer(obj.normalBuffer);
