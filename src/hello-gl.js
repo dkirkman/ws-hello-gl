@@ -305,6 +305,62 @@ function bindAndRender(gl, params, obj, modelViewMatrix) {
   }
 }
 
+function setPositions(positions, index, long, lat) {
+  positions[index*6 + 0] = Math.cos(long)*Math.sin(lat);
+  positions[index*6 + 1] = Math.sin(long)*Math.sin(lat);
+  positions[index*6 + 2] = Math.cos(lat);
+  
+  positions[index*6 + 3] = Math.cos(long)*Math.sin(lat);
+  positions[index*6 + 4] = Math.sin(long)*Math.sin(lat);
+  positions[index*6 + 5] = Math.cos(lat);
+}
+
+function setNormals(normals, index, long, lat) {
+  normals[index*6 + 0] = Math.cos(long)*Math.sin(lat);
+  normals[index*6 + 1] = Math.sin(long)*Math.sin(lat);
+  normals[index*6 + 2] = Math.cos(lat);
+  
+  normals[index*6 + 3] = Math.cos(long)*Math.sin(lat);
+  normals[index*6 + 4] = Math.sin(long)*Math.sin(lat);
+  normals[index*6 + 5] = Math.cos(lat);
+}
+
+function setTextureCoords(textureCoords, index, i, j, nlong, nlat) {
+  textureCoords[index*4 + 0] = i/nlong+1;
+  textureCoords[index*4 + 1] = j/nlat+1;
+  
+  textureCoords[index*4 + 2] = i/nlong;
+  textureCoords[index*4 + 3] = j/nlat;
+}
+
+function setColors(colors, index) {
+  colors[index*8 + 0] = 0.0;
+  colors[index*8 + 1] = 1.0;
+  colors[index*8 + 2] = 0.0;
+  colors[index*8 + 3] = 1.0;
+  
+  colors[index*8 + 4] = 0.0;
+  colors[index*8 + 5] = 0.0;
+  colors[index*8 + 6] = 1.0;
+  colors[index*8 + 7] = 1.0;
+}
+
+function setIndices(indices, i, j, nlong, nlat) {
+  if (i < nlong && j < nlat) {
+    var iindex = j*(nlong+1) + i;
+    var nn = nlong+1;  // "next" longitude
+    
+    if (j > -1 && j < nlat-1 + 2) {
+      indices[iindex*6 + 0] = ((j+1)*nn + i)*2;
+      indices[iindex*6 + 1] = (j*nn + i)*2;
+      indices[iindex*6 + 2] = (j*nn + (i+1))*2;
+      
+      indices[iindex*6 + 3] = ((j+1)*nn + i)*2 + 1;          
+      indices[iindex*6 + 4] = ((j+1)*nn + (i+1))*2 + 1;
+      indices[iindex*6 + 5] = (j*nn + (i+1))*2 + 1;        
+    } 
+  }
+}
 
 function makeSphere(gl, meshSize) {
   let positions = [];
@@ -313,100 +369,43 @@ function makeSphere(gl, meshSize) {
   let indices = [];
   let textureCoords = [];
   
-  let nlong = meshSize; 
-  let nlat = meshSize;  
-  
-  for (var j=0; j<=nlat; ++j) {
-    for (var i=0; i<=nlong; ++i) {
-      let long = (2*Math.PI/nlong) * i;
-      let lat = (Math.PI/nlat) * j;
+  for (var j=0; j<=meshSize; ++j) {
+    for (var i=0; i<=meshSize; ++i) {
+      let long = (2*Math.PI/meshSize) * i;
+      let lat = (Math.PI/meshSize) * j;
       
-      let index = j*(nlong+1) + i;
+      let index = j*(meshSize+1) + i;
 
-      positions[index*6 + 0] = Math.cos(long)*Math.sin(lat);
-      positions[index*6 + 1] = Math.sin(long)*Math.sin(lat);
-      positions[index*6 + 2] = Math.cos(lat);
+      setPositions(positions, index, long, lat);
+      setNormals(normals, index, long, lat);
+      setTextureCoords(textureCoords, index, i, j, 
+                       meshSize, meshSize);
+      setColors(colors, index);
 
-      positions[index*6 + 3] = Math.cos(long)*Math.sin(lat);
-      positions[index*6 + 4] = Math.sin(long)*Math.sin(lat);
-      positions[index*6 + 5] = Math.cos(lat);
-
-
-      normals[index*6 + 0] = Math.cos(long)*Math.sin(lat);
-      normals[index*6 + 1] = Math.sin(long)*Math.sin(lat);
-      normals[index*6 + 2] = Math.cos(lat);
-
-      normals[index*6 + 3] = Math.cos(long)*Math.sin(lat);
-      normals[index*6 + 4] = Math.sin(long)*Math.sin(lat);
-      normals[index*6 + 5] = Math.cos(lat);
-      
-
-      textureCoords[index*4 + 0] = i/nlong;
-      textureCoords[index*4 + 1] = j/nlat;
-
-      textureCoords[index*4 + 2] = i/nlong;
-      textureCoords[index*4 + 3] = j/nlat;
-      
-
-      colors[index*8 + 0] = 0.0;
-      colors[index*8 + 1] = 1.0;
-      colors[index*8 + 2] = 0.0;
-      colors[index*8 + 3] = 1.0;
-      
-      colors[index*8 + 4] = 0.0;
-      colors[index*8 + 5] = 0.0;
-      colors[index*8 + 6] = 1.0;
-      colors[index*8 + 7] = 1.0;
-
-      if (i < nlong && j < nlat) {
-        var iindex = j*(nlong+1) + i;
-        var nn = nlong+1;
-
-        if (j > -1 && j < nlat-1 + 2) {
-          indices[iindex*6 + 0] = ((j+1)*nn + i)*2;
-          indices[iindex*6 + 1] = (j*nn + i)*2;
-          indices[iindex*6 + 2] = (j*nn + (i+1))*2;
-          
-          indices[iindex*6 + 3] = ((j+1)*nn + i)*2 + 1;          
-          indices[iindex*6 + 4] = ((j+1)*nn + (i+1))*2 + 1;
-          indices[iindex*6 + 5] = (j*nn + (i+1))*2 + 1;        
-        } 
-      }
+      setIndices(indices, i, j, meshSize, meshSize);
     }
   }
-  
-  let vertexBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), 
-                gl.STATIC_DRAW);
-  
-  let colorBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), 
-                gl.STATIC_DRAW);
-  
-  let normalBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals),
-                gl.STATIC_DRAW);
-  
-  
-  let textureBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords),
-                gl.STATIC_DRAW);
   
   const indexBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,
                 new Uint16Array(indices), gl.STATIC_DRAW);
   
-  return {vertexBuffer: vertexBuffer,
-          colorBuffer: colorBuffer,
-          normalBuffer: normalBuffer,
+  return {vertexBuffer: bindFloatBuffer(gl, positions),
+          colorBuffer: bindFloatBuffer(gl, colors),
+          normalBuffer: bindFloatBuffer(gl, normals),
           indexBuffer: indexBuffer,
-          textureBuffer: textureBuffer,
+          textureBuffer: bindFloatBuffer(gl, textureCoords),
           vertexCount: indices.length};
+}
+
+function bindFloatBuffer(gl, array) { 
+  let buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(array), 
+                gl.STATIC_DRAW);
+
+  return buffer;
 }
 
 function deleteObj(gl, obj) {
