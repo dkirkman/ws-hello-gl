@@ -6,8 +6,8 @@ class HelloGL extends Component {
   constructor(props) {   
     super(props);
 
-    this.width = 800;
-    this.height = 480;
+    this.width = 630;
+    this.height = 400;
 
     this.canvasRef = React.createRef();
     this.controlRef = React.createRef();
@@ -35,7 +35,11 @@ class HelloGL extends Component {
   render() {
     return (
       <p>
-        <div className="demon">
+        <div className="demon" style={{width:630, 
+                                       'margin-left': 'auto',
+                                       'margin-right': 'auto',
+                                       'display': 'block'
+             }}>
           <div className="demon" ref={this.controlRef}
                style={{height: 0,
                        float: 'right',
